@@ -1,0 +1,15 @@
+[Unit]
+Description=WireGuard VPS inbound failover (repoints DNAT to the live tunnel)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Optional: reuse the same env file as the LXC for DISCORD_WEBHOOK_URL.
+EnvironmentFile=-/etc/wg-smart-route.env
+ExecStart=/usr/local/sbin/wg-vps-failover.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
