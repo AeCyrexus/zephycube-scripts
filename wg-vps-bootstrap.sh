@@ -70,13 +70,23 @@ for pair in "${PLDT_IF} ${PLDT_PORT} ${PLDT_ADDR} ${LXC_PLDT_PUBKEY}" "${GLOBE_I
 Address    = ${addr}/30
 ListenPort = ${port}
 PrivateKey = ${priv}
+# Table = off is REQUIRED here. AllowedIPs 0.0.0.0/0 below tells wg-quick
+# this peer should get a full-tunnel default route — and since this peer has
+# no Endpoint (pop-control has no stable IP), wg-quick has nothing to exempt
+# from that route, so it would swallow ALL outbound traffic, including this
+# SSH session, the instant the interface comes up. Table=off disables that
+# automatic routing entirely; wg-vps-failover.sh never needed it anyway (it
+# only pings the interface directly and manages its own iptables rules). The
+# kernel still auto-adds the connected /30 route regardless of this setting.
+Table      = off
 
 [Peer]
 PublicKey  = ${peer}
 # No Endpoint here — pop-control has no stable public IP; WireGuard learns
 # its endpoint from incoming packets (its own PersistentKeepalive keeps it
-# fresh). AllowedIPs 0.0.0.0/0 is load-bearing, matches the LXC side — do
-# not tighten it.
+# fresh). AllowedIPs 0.0.0.0/0 is load-bearing (accepts return traffic from
+# any source), safe ONLY because Table=off above stops it from becoming a
+# routing decision.
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 EOF
